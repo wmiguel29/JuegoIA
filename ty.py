@@ -39,6 +39,7 @@ class Dots_and_Boxes():
         self.player1_score=0
         self.player2_score=0
         self.player=True
+        self.board_status = np.zeros(shape=(number_of_dots - 1, number_of_dots - 1))
 
     def play_again(self):
         self.refresh_board()
@@ -249,10 +250,13 @@ class Dots_and_Boxes():
                 self.mark_box()
                 self.refresh_board()
                 operators= self.posibility()
+                status = [self.row_status, self.col_status, self.board_status]
                 
-                prueba= Doxes(True,value="inicio",state1=self.row_status, state2=self.col_status, operators=operators)
-                print(prueba.state1)
-                print(prueba.state2)
+                prueba= Doxes(True,value="inicio",state = status, operators=operators)
+                print(prueba.state[0])
+                print(prueba.state[1])
+                print(prueba.isObjective())
+                                
                 treeMinMax= Tree(node, operators)
                 if self.is_gameover():
                     # self.canvas.delete("all")
@@ -273,9 +277,8 @@ class Dots_and_Boxes():
 
 #INCIIO ALPHA BETHA __ COLOCAR EL STATE DE LAS 2 VARIABLES
 class Node ():
-  def __init__(self, state1, state2,value,operators,operator=None, parent=None,objective=None):
-    self.state1= state1
-    self.state2= state2
+  def __init__(self, state ,value,operators,operator=None, parent=None,objective=None):
+    self.state = state
     self.value = value
     self.children = []
     self.parent=parent
@@ -373,7 +376,7 @@ class Tree ():
       children = node.getchildrens()
       for i,child in enumerate(children):
         if child is not None:
-          newChild=type(self.root)(value=node.value+'-'+str(i),state=child,operator=i,parent=node, operators=node.operators,player=False)
+          newChild=type(self.root)(value=node.value+'-'+str(i),state=node.getState(),operator=i,parent=node, operators=node.operators,player=False)
           newChild=node.add_node_child(newChild)
           value = max(value,self.alpha_betaR(newChild, depth-1, alpha,beta,False))
           alpha = max(alpha,value)
@@ -385,7 +388,7 @@ class Tree ():
       children = node.getchildrens()
       for i,child in enumerate(children):
         if child is not None:
-          newChild=type(self.root)(value=node.value+'-'+str(i),state=child,operator=i,parent=node, operators=node.operators,player=True)
+          newChild=type(self.root)(value=node.value+'-'+str(i),state=Doxes.getState(),operator=i,parent=node, operators=node.operators,player=True)
           newChild=node.add_node_child(newChild)
           value = min(value,self.alpha_betaR(newChild, depth-1, alpha,beta,True))
           beta = min(beta,value)
@@ -394,7 +397,16 @@ class Tree ():
     node.v = value
     return value
   
-  
+def validate(coord, rows, columns):
+    x,y = coord
+    if rows[x][y] == 0:
+      return x,y,0
+    elif rows[x+1][y] == 0:
+      return x+1,y,0
+    elif columns[x][y] == 0:
+      return x,y,1
+    elif columns[x][y+1] == 0:
+      return x,y+1,1
   
 class Doxes(Node):
   ## Vamos a añadir el jugador, pues en dependencia del jugador se hace una cosa u otra.
@@ -408,8 +420,8 @@ class Doxes(Node):
       self.v=float('inf')
   
   def getState(self, index):
-    state1=self.state1
-    state2=self.state2
+    state1 = self.state[0]
+    state2 = self.state[1]	
     nextState=None
     (x,y,z)=self.operators[index]
 
@@ -425,13 +437,37 @@ class Doxes(Node):
       if self.player==True: ## Si es Max se pone X    
         nextState[x][y]=1
      return nextState if state2!=nextState else None
+
+  def isObjective(self):
+    matrix = np.all(self.state[2] == 4)
+    return matrix
+        
+
    
 
   #Costo acumulativo(valor 1 en cada nivel)
   def cost(self):
     return self.level
 
-  #def heuristic(self):
+  def heuristic(self):
+    rows = self.state[0]
+    columnns = self.state[1]
+    board = self.state[2]
+
+
+    coords = np.argwhere(board == 3)
+
+    if coords:
+      x,y,z = validate(coords[0])
+      if z==0:
+        return 5
+
+
+    
+
+
+
+  
    
 
 
