@@ -2,9 +2,12 @@
 # Created: 13 March,2020, 9:19 PM
 # Email: aqeel.anwar@gatech.edu
 
+
+from array import array
 from ast import operator
 from multiprocessing.sharedctypes import Value
 from platform import node
+from queue import Empty
 from tkinter import *
 import numpy as np
 
@@ -251,13 +254,13 @@ class Dots_and_Boxes():
                 self.refresh_board()
                 operators= self.posibility()
                 status = [self.row_status, self.col_status, self.board_status]
-                
                 prueba= Doxes(True,value="inicio",state = status, operators=operators)
                 print(prueba.state[0])
                 print(prueba.state[1])
-                print(prueba.isObjective())
-                                
-                treeMinMax= Tree(node, operators)
+                print(prueba.isObjective())               
+                treeMinMax= Tree(prueba, operators)
+                resultado= treeMinMax.alpha_beta(1)
+                
                 if self.is_gameover():
                     # self.canvas.delete("all")
                     self.display_gameover()
@@ -302,10 +305,30 @@ class Node ():
 
   #Devuelve todos los estados según los operadores aplicados
   def getchildrens(self):
-    return [
+    """return [
         self.getState(i) 
           if not self.repeatStatePath(self.getState(i)) 
             else None for i, op in enumerate(self.operators)]
+            """
+    resultados=[]
+    row=self.state[0]
+    columns= self.state[1]
+    for i in range(len(row)):
+      for j in range(len(row[i])):
+        if row [i][j]!=1:
+          
+          nuevo=np.copy(row)
+          nuevo[i][j]=1
+          resultados.append([nuevo,columns,self.state[2]])
+          
+    for i in range(len(columns)):
+      for j in range(len(columns[i])):
+        if columns [i][j]!=1:
+          nuevo=np.copy(columns)
+          nuevo[i][j]=1
+          resultados.append([row,nuevo,self.state[2]])
+          
+    return resultados
     
   def getState(self, index):
     pass
@@ -376,7 +399,7 @@ class Tree ():
       children = node.getchildrens()
       for i,child in enumerate(children):
         if child is not None:
-          newChild=type(self.root)(value=node.value+'-'+str(i),state=node.getState(),operator=i,parent=node, operators=node.operators,player=False)
+          newChild=type(self.root)(value=node.value+'-'+str(i),state=children[i],operator=i,parent=node, operators=node.operators,player=False)
           newChild=node.add_node_child(newChild)
           value = max(value,self.alpha_betaR(newChild, depth-1, alpha,beta,False))
           alpha = max(alpha,value)
@@ -396,17 +419,9 @@ class Tree ():
             break
     node.v = value
     return value
+
   
-def validate(coord, rows, columns):
-    x,y = coord
-    if rows[x][y] == 0:
-      return x,y,0
-    elif rows[x+1][y] == 0:
-      return x+1,y,0
-    elif columns[x][y] == 0:
-      return x,y,1
-    elif columns[x][y+1] == 0:
-      return x,y+1,1
+
   
 class Doxes(Node):
   ## Vamos a añadir el jugador, pues en dependencia del jugador se hace una cosa u otra.
@@ -430,37 +445,97 @@ class Doxes(Node):
       nextState= [f.copy() for f in state1]
       if self.player==True: ## Si es Max se pone X    
         nextState[x][y]=1
-     return nextState if state1!=nextState else None
+      a=[nextState, state2, self.state[2]]
+      return a
+    
     elif z==1:
      if state2[x][y]==0:
       nextState= [f.copy() for f in state2]
       if self.player==True: ## Si es Max se pone X    
         nextState[x][y]=1
-     return nextState if state2!=nextState else None
+      a=[state1, nextState, self.state[2]] 
+      return a
+    
+     
 
   def isObjective(self):
     matrix = np.all(self.state[2] == 4)
     return matrix
-        
-
-   
 
   #Costo acumulativo(valor 1 en cada nivel)
   def cost(self):
     return self.level
+  
+  def validate(coord, rows, columns):
+    x,y = coord
+    if rows[x][y] == 0:
+      return x,y,0
+    elif rows[x+1][y] == 0:
+      return x+1,y,0
+    elif columns[x][y] == 0:
+      return x,y,1
+    elif columns[x][y+1] == 0:
+      return x,y+1,1
 
+ 
   def heuristic(self):
-    rows = self.state[0]
-    columnns = self.state[1]
+    a = self.state[0]
+    b = self.state[1]
     board = self.state[2]
-
-
     coords = np.argwhere(board == 3)
-
-    if coords:
-      x,y,z = validate(coords[0])
+    if coords.size>0:
+      x,y,z = self.validate(coords[0],a,b)
       if z==0:
-        return 5
+        return 4
+    coords = np.argwhere(board == 1)
+    if coords.size>0:
+      x,y,z = self.labyrinth(coords)
+
+    coords = np.argwhere(board == 0)
+
+    coords = np.argwhere(board == 2)
+      
+    return 0
+
+  def labyrinth(self,coords):
+    Max=0
+    cordenadas=[]
+    cordenadas2=[]
+    for i in range(len(coords)):
+      actual=0
+      if coords[i][0] -1 >0:
+         actual+= self.state[2][i][0]
+      if coords[i][0] +1<len(self.state[2][i]):
+         actual+= self.state[2][i][0]
+      if coords[i][1] -1 >0:
+         actual+= self.state[2][i][1]
+      if coords[i][1] +1<len(self.state[2][i]):
+         actual+= self.state[2][i][1]
+      if actual>Max:
+        Max=actual
+        cordenadas= coords[i]
+    valor1=self.state[0][0][0]
+    valor2=self.state[0][0][1]
+    valor3=self.state[0][1][0]
+    valor4=self.state[0][1][1]
+    
+    if self.state[0][cordenadas[0]][cordenadas[1]] != 1:
+      cordenadas2.append([cordenadas[0],cordenadas[1],0])
+    if self.state[0][cordenadas[0]][cordenadas[1]+1] != 1:
+      cordenadas2.append([cordenadas[0],cordenadas[1]+1,0])
+    if self.state[1][cordenadas[0]][cordenadas[1]] != 1:
+      cordenadas2.append([cordenadas[0],cordenadas[1],1])
+    if self.state[1][cordenadas[0]+1][cordenadas[1]] != 1:
+      cordenadas2.append([cordenadas[0]+1,cordenadas[1],1])
+    return cordenadas2      
+
+      
+    
+  
+  
+  
+    
+  
 
 
     
