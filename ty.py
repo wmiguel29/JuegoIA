@@ -252,6 +252,7 @@ class Dots_and_Boxes():
                 self.make_edge(valid_input, logical_positon)
                 self.mark_box()
                 self.refresh_board()
+                
                 operators= self.posibility()
                 status = [self.row_status, self.col_status, self.board_status]
                 prueba= Doxes(True,value="inicio",state = status, operators=operators)
@@ -303,6 +304,22 @@ class Node ():
     self.children.append(node)    
     return node
 
+
+  def update_board(self, states):
+    cont = 0
+    for i in range(len(states[2])):
+      for j in range(len(states[2][i])):
+        if states[0][i][j] != 0:
+          cont+=1
+        if states[0][i+1][j] != 0:
+          cont+=1
+        if states[1][i][j] != 0:
+          cont+=1
+        if states[1][i][j+1] != 0:
+          cont+=1
+        states[2][i][j] = cont
+        cont=0
+    return states[2]
   #Devuelve todos los estados según los operadores aplicados
   def getchildrens(self):
     """return [
@@ -313,20 +330,27 @@ class Node ():
     resultados=[]
     row=self.state[0]
     columns= self.state[1]
+    b= self.state[2]
     for i in range(len(row)):
       for j in range(len(row[i])):
         if row [i][j]!=1:
           
           nuevo=np.copy(row)
           nuevo[i][j]=1
-          resultados.append([nuevo,columns,self.state[2]])
+          board=self.update_board([nuevo,columns,b])
+          resultados.append([nuevo,columns,board])
           
+    
     for i in range(len(columns)):
       for j in range(len(columns[i])):
         if columns [i][j]!=1:
+
+
           nuevo=np.copy(columns)
           nuevo[i][j]=1
-          resultados.append([row,nuevo,self.state[2]])
+          board=self.update_board([row,nuevo,b])
+          resultados.append([row,nuevo,board])
+    
           
     return resultados
     
@@ -443,7 +467,7 @@ class Doxes(Node):
     if z==0:
      if state1[x][y]==0:
       nextState= [f.copy() for f in state1]
-      if self.player==True: ## Si es Max se pone X    
+      if self.player==True:  
         nextState[x][y]=1
       a=[nextState, state2, self.state[2]]
       return a
@@ -451,7 +475,7 @@ class Doxes(Node):
     elif z==1:
      if state2[x][y]==0:
       nextState= [f.copy() for f in state2]
-      if self.player==True: ## Si es Max se pone X    
+      if self.player==True:  
         nextState[x][y]=1
       a=[state1, nextState, self.state[2]] 
       return a
@@ -462,7 +486,6 @@ class Doxes(Node):
     matrix = np.all(self.state[2] == 4)
     return matrix
 
-  #Costo acumulativo(valor 1 en cada nivel)
   def cost(self):
     return self.level
   
@@ -488,8 +511,8 @@ class Doxes(Node):
       if z==0:
         return 4
     coords = np.argwhere(board == 1)
-    if coords.size>0:
-      x,y,z = self.labyrinth(coords)
+    #if coords.size>0:
+     # x,y,z = self.labyrinth(coords)
 
     coords = np.argwhere(board == 0)
 
