@@ -321,7 +321,7 @@ class Node ():
         cont=0
     return states[2]
   #Devuelve todos los estados según los operadores aplicados
-  def getchildrens(self):
+  def   getchildrens(self):
     """return [
         self.getState(i) 
           if not self.repeatStatePath(self.getState(i)) 
@@ -511,10 +511,12 @@ class Doxes(Node):
       if z==0:
         return 4
     coords = np.argwhere(board == 1)
-    #if coords.size>0:
-     # x,y,z = self.labyrinth(coords)
+    if coords.size>0:
+      x,y,z = self.labyrinth(coords)
 
     coords = np.argwhere(board == 0)
+    if coords.size>0:
+      x,y,z = self.damage(coords)
 
     coords = np.argwhere(board == 2)
       
@@ -537,10 +539,7 @@ class Doxes(Node):
       if actual>Max:
         Max=actual
         cordenadas= coords[i]
-    valor1=self.state[0][0][0]
-    valor2=self.state[0][0][1]
-    valor3=self.state[0][1][0]
-    valor4=self.state[0][1][1]
+    
     
     if self.state[0][cordenadas[0]][cordenadas[1]] != 1:
       cordenadas2.append([cordenadas[0],cordenadas[1],0])
@@ -550,7 +549,55 @@ class Doxes(Node):
       cordenadas2.append([cordenadas[0],cordenadas[1],1])
     if self.state[1][cordenadas[0]+1][cordenadas[1]] != 1:
       cordenadas2.append([cordenadas[0]+1,cordenadas[1],1])
-    return cordenadas2      
+    return cordenadas2 
+
+  def searchPosition(self, coord):
+    x,y = coord
+    if self.state[0][x][y] == 0:
+      return x,y,0
+    elif self.state[0][x+1][y] == 0:
+      return x+1,y, 0
+    elif self.state[1][x][y] == 0:
+      return x,y,1
+    elif self.state[1][x][y+1] == 0:
+      return x,y+1,1
+
+
+  def damage(self,coords):
+    aux = 0
+    for coord in coords:
+      x,y = coord
+      if self.state[2][x][y-1] == 0:
+        aux =  x,y-1
+        return self.searchPosition(aux)
+      elif self.state[2][x][y+1] == 0:
+        aux = x,y+1
+        return self.searchPosition(aux)
+      elif self.state[2][x-1][y] == 0:
+        aux =  x-1,y
+        return self.searchPosition(aux)
+      elif self.state[2][x+1][y] == 0:
+        aux =  x+1,y
+        return self.searchPosition(aux)
+      else :
+        if self.state[0][x][y] == 0:
+          return x,y,0
+        elif self.state[0][x+1][y] == 0:
+          return x+1,y, 0
+        elif self.state[1][x][y] == 0:
+          return x,y,1
+        elif self.state[1][x][y+1] == 0:
+          return x,y+1,1
+      
+  
+  
+  
+    
+  
+  
+
+
+       
 
       
     
