@@ -521,6 +521,7 @@ class Doxes(Node):
       self.lessDamageR(coords1,matrix,coord, i = i,cont = 0 )
 
     if len(matrix) != 2:
+
       if rows[x][y] == 0 :
         return x,y,0
       elif rows[x+1][y] == 0:
