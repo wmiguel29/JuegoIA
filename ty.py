@@ -269,6 +269,17 @@ class Dots_and_Boxes():
                      self.display_turn_text()
                 else:
                     self.player1_turn = not self.player1_turn
+                    node = Doxes(True, value = "inicio", state = status, operators=operators)
+                    treeAlphaBeta = Tree(node, operators)
+                    node2 = treeAlphaBeta.alpha_beta(1)
+                    logicalPosition, type =  ia_update(node.state, node2.state)
+                    self.update_board(type, logicalPosition)
+                    self.make_edge(type, logicalPosition)
+                    self.mark_box()
+                    self.refresh_board()
+
+
+
                     self.display_turn_text()
         else:
             self.canvas.delete("all")
@@ -276,7 +287,18 @@ class Dots_and_Boxes():
             self.reset_board = False
 
 
+def ia_update(state1, state2):
+  for i in range(len(state1[0])):
+    for j in range(len(state1[0][i])):
+      if state1[0][i][j] != state2[0][i][j]:
+        return [i, j], "row"
+  for i in range(len(state1[1])):
+    for j in range(len(state1[1][i])):
+      if state1[1][i][j] != state2[1][i][j]:
+        return [i, j], "col"
 
+
+  
 
 
 #INCIIO ALPHA BETHA __ COLOCAR EL STATE DE LAS 2 VARIABLES
@@ -499,7 +521,8 @@ class Doxes(Node):
       self.lessDamageR(coords1,matrix,coord, i = i,cont = 0 )
 
     if len(matrix) != 2:
-      if rows[x][y] == 0:
+
+      if rows[x][y] == 0 :
         return x,y,0
       elif rows[x+1][y] == 0:
         return x+1,y,0
@@ -559,7 +582,6 @@ class Doxes(Node):
   def lessDamage(self,coords):
     matrix = []
     coords1 = np.copy(coords)
-    
     for coord,i in enumerate(coords1):
       self.lessDamageR(coords1,matrix,coord, i = i,cont = 0 )
 
