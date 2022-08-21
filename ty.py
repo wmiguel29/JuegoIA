@@ -489,16 +489,48 @@ class Doxes(Node):
   def cost(self):
     return self.level
   
-  def validate(coord, rows, columns):
+  def validate(self, coord, rows, columns):
     x,y = coord
-    if rows[x][y] == 0:
-      return x,y,0
-    elif rows[x+1][y] == 0:
-      return x+1,y,0
-    elif columns[x][y] == 0:
-      return x,y,1
-    elif columns[x][y+1] == 0:
-      return x,y+1,1
+
+    matrix = []
+    coords1 = np.copy(coord)
+    
+    for coord,i in enumerate(coords1):
+      self.lessDamageR(coords1,matrix,coord, i = i,cont = 0 )
+
+    if len(matrix) != 2:
+      if rows[x][y] == 0:
+        return x,y,0
+      elif rows[x+1][y] == 0:
+        return x+1,y,0
+      elif columns[x][y] == 0:
+        return x,y,1
+      elif columns[x][y+1] == 0:
+        return x,y+1,1
+
+    else:
+      array = [len(arr) for arr in matrix]
+      min =array.min()
+      index = array.index(min)	
+      if min !=2 :
+        if rows[x][y] == 0:
+          return x,y,0
+        elif rows[x+1][y] == 0:
+          return x+1,y,0
+        elif columns[x][y] == 0:
+          return x,y,1
+        elif columns[x][y+1] == 0:
+          return x,y+1,1
+      else:
+        if rows[x][y] == 0:
+          return x-1,y,0
+        elif rows[x+1][y] == 0:
+          return x+2,y,0
+        elif columns[x][y] == 0:
+          return x,y-1,1
+        elif columns[x][y+1] == 0:
+          return x,y+2,1
+          	
 
  
   def heuristic(self):
@@ -519,8 +551,61 @@ class Doxes(Node):
       x,y,z = self.damage(coords)
 
     coords = np.argwhere(board == 2)
+    if coords.size>0:
+      x,y,z = self.lessDamage(coords)
       
     return 0
+
+  def lessDamage(self,coords):
+    matrix = []
+    coords1 = np.copy(coords)
+    
+    for coord,i in enumerate(coords1):
+      self.lessDamageR(coords1,matrix,coord, i = i,cont = 0 )
+
+    array = [len(arr) for arr in matrix]
+    min =array.min()
+    index = array.index(min)	
+
+    coord = matrix[index][0]
+
+    if self.state[0][coord[0]][coord[1]] != 1:
+      return coord[0],coord[1],0
+    elif self.state[0][coord[0]][coord[1]+1] != 1:
+      return coord[0],coord[1]+1,0
+    elif self.state[1][coord[0]][coord[1]] != 1:
+      return coord[0],coord[1],1
+    elif self.state[1][coord[0]][coord[1]+1] != 1:
+      return coord[0],coord[1]+1,1
+     
+
+
+  def lessDamageR(self,coords,matrix,coord, i, cont):
+    x,y = coord
+
+    if self.state[0][x][y] == 0 :
+      matrix[i].append((x,y))
+      coords.remove(coord)
+      self.lessDamageR(coords,matrix, (x-1,y), i, cont+1)
+      
+
+    elif self.state[0][x+1][y] == 0 :
+      matrix[i].append((x,y))
+      coords.remove(coord)
+      self.lessDamageR(coords,matrix,(x+1,y),  i, cont+1)
+      
+    elif self.state[1][x][y] == 0 :
+      matrix[i].append((x,y))
+      coords.remove(coord)
+      self.lessDamageR(coords,matrix,(x,y-1),  i, cont+1)
+      
+      
+    elif self.state[1][x][y+1] == 0 :
+      matrix[i].append((x,y))
+      coords.remove(coord)
+      self.lessDamageR(coords,matrix,(x,y+1), i, cont+1)
+
+          
 
   def labyrinth(self,coords):
     Max=0
