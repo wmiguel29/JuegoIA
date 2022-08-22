@@ -2,15 +2,9 @@
 # Created: 13 March,2020, 9:19 PM
 # Email: aqeel.anwar@gatech.edu
 
-
-from array import array
-from ast import operator
-from contextlib import nullcontext
 from multiprocessing.sharedctypes import Value
 from platform import node
-from queue import Empty
 from tkinter import *
-from unittest import result
 import numpy as np
 
 size_of_board = 600
@@ -29,9 +23,7 @@ distance_between_dots = size_of_board / (number_of_dots)
 
 
 class Dots_and_Boxes():
-    # ------------------------------------------------------------------
-    # Initialization functions
-    # ------------------------------------------------------------------
+
     def __init__(self):
         self.window = Tk()
         self.window.title('Dots_and_Boxes')
@@ -52,9 +44,8 @@ class Dots_and_Boxes():
         self.row_status = np.zeros(shape=(number_of_dots, number_of_dots - 1))
         self.col_status = np.zeros(shape=(number_of_dots - 1, number_of_dots))
         
-        # Input from user in form of clicks
-        self.player1_starts = not self.player1_starts
-        self.player1_turn = not self.player1_starts
+        self.player1_starts = True
+        self.player1_turn = True
         self.reset_board = False
         self.turntext_handle = []
 
@@ -64,10 +55,6 @@ class Dots_and_Boxes():
     def mainloop(self):
         self.window.mainloop()
 
-    # ------------------------------------------------------------------
-    # Logical Functions:
-    # The modules required to carry out game logic
-    # ------------------------------------------------------------------
 
     def is_grid_occupied(self, logical_position, type):
         r = logical_position[0]
@@ -91,7 +78,6 @@ class Dots_and_Boxes():
             c = int(position[1]//2)
             logical_position = [r, c]
             type = 'row'
-            # self.row_status[c][r]=1
         elif position[0] % 2 == 0 and (position[1] - 1) % 2 == 0:
             c = int((position[1] - 1) // 2)
             r = int(position[0] // 2)
@@ -135,11 +121,6 @@ class Dots_and_Boxes():
     def is_gameover(self):
         return (self.row_status == 1).all() and (self.col_status == 1).all()
 
-    # ------------------------------------------------------------------
-    # Drawing Functions:
-    # The modules required to draw required game based object on canvas
-    # ------------------------------------------------------------------
-
     def make_edge(self, type, logical_position):
         if type == 'row':
             start_x = distance_between_dots/2 + logical_position[0]*distance_between_dots
@@ -161,7 +142,6 @@ class Dots_and_Boxes():
 
     def display_gameover(self):
         if self.player1_score > self.player2_score:
-            # Player 1 wins
             text = 'Winner: Player 1 '
             color = player1_color
         elif self.player2_score > self.player1_score:
@@ -180,7 +160,6 @@ class Dots_and_Boxes():
 
         score_text = 'Player 1 : ' + str(self.player1_score) + '\n'
         score_text += 'Player 2 : ' + str(self.player2_score) + '\n'
-        # score_text += 'Tie                    : ' + str(self.tie_score)
         self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
                                 text=score_text)
         self.player1_score=0
@@ -255,38 +234,30 @@ class Dots_and_Boxes():
                 self.make_edge(valid_input, logical_positon)
                 self.mark_box()
                 self.refresh_board()
-                
-              
-                
                 if self.is_gameover():
-                    # self.canvas.delete("all")
                     self.display_gameover()
                 elif(cont==len(self.already_marked_boxes)):
                   self.player1_turn = not self.player1_turn
                   while(self.player1_turn==False):
-                    cont = len(self.already_marked_boxes)
-                    operators= self.posibility()
-                    status = [self.row_status, self.col_status, self.board_status]
-                    prueba= Doxes(True,value="inicio",state = status, operators=operators)              
-                    treeMinMax= Tree(prueba, operators)
-                    resultado= treeMinMax.alpha_beta(5)
-                    self.row_status=resultado.state[0]
-                    self.col_status=resultado.state[1]
-                    self.board_status=resultado.state[2]
-                    a,b=ia_update(resultado.state,resultado.parent.state)
-                    self.make_edge(b,a)
-                    self.mark_box()
-                    self.refresh_board()  
-                    print(self.row_status)
-                    print("----")
-                    print(self.col_status)
-                    print("----")
-                    print(self.board_status)
-                    print("----")  
-                    
-                    if(cont==len(self.already_marked_boxes)):
+                    if(self.is_gameover()):
                       self.player1_turn = True
-                               
+                      self.display_gameover()
+                    else:
+                      cont = len(self.already_marked_boxes)
+                      operators= self.posibility()
+                      status = [self.row_status, self.col_status, self.board_status]
+                      prueba= Doxes(True,value="inicio",state = status, operators=operators)              
+                      treeMinMax= Tree(prueba, operators)
+                      resultado= treeMinMax.alpha_beta(1)
+                      self.row_status=resultado.state[0]
+                      self.col_status=resultado.state[1]
+                      self.board_status=resultado.state[2]
+                      a,b=ia_update(resultado.state,resultado.parent.state)
+                      self.make_edge(b,a)
+                      self.mark_box()
+                      self.refresh_board()  
+                    if(cont==len(self.already_marked_boxes)):
+                      self.player1_turn = True                    
         else:
             self.canvas.delete("all")
             self.play_again()
@@ -297,11 +268,11 @@ def ia_update(state1, state2):
   for i in range(len(state1[0])):
     for j in range(len(state1[0][i])):
       if state1[0][i][j] != state2[0][i][j]:
-        return [i, j], "row"
+        return [j, i], "row"
   for i in range(len(state1[1])):
     for j in range(len(state1[1][i])):
       if state1[1][i][j] != state2[1][i][j]:
-        return [i, j], "col"
+        return [j, i], "col"
 
 
 
@@ -330,7 +301,6 @@ class Node ():
     self.children.append(node)    
     return node
 
-
   def update_board1(self,states):
     cont = 0
     for i in range(len(states[2])):
@@ -350,12 +320,6 @@ class Node ():
   #Devuelve todos los estados según los operadores aplicados
 
   def   getchildrens(self):
-    """return [
-        self.getState(i) 
-          if not self.repeatStatePath(self.getState(i)) 
-            else None for i, op in enumerate(self.operators)]
-            """
-   
     resultados=[]
     row=self.state[0]
     columns= self.state[1]
@@ -378,33 +342,11 @@ class Node ():
           nuevo[i][j]=1
           board=self.update_board1([row,nuevo,original])
           resultados.append([row,nuevo,board])
-    
-          
+     
     return resultados
     
   def getState(self, index):
     pass
-  
-  def __eq__(self, other):
-    return self.state == other.state
- 
-  def __lt__(self, other):
-    return self.f() < other.f()
-   
-  
-  def repeatStatePath(self, state):
-      n=self
-      while n is not None and n.state!=state:
-          n=n.parent
-      return n is not None
-    
-  def pathObjective(self):
-      n=self
-      result=[]
-      while n is not None:
-          result.append(n)
-          n=n.parent
-      return result
   
   def heuristic(self):
     return 0
@@ -471,10 +413,7 @@ class Tree ():
             break
     node.v = value
     return value
-
-  
-
-  
+ 
 class Doxes(Node):
   ## Vamos a añadir el jugador, pues en dependencia del jugador se hace una cosa u otra.
 
@@ -508,27 +447,13 @@ class Doxes(Node):
       a=[state1, nextState, self.state[2]] 
       return a
     
-     
-
   def isObjective(self):
     matrix = np.all(self.state[2] == 4)
     return matrix
 
   def cost(self):
     return self.level
-  
-  def validate(coord, rows, columns):
-    x,y = coord
-    if rows[x][y] == 0:
-      return x,y,0
-    elif rows[x+1][y] == 0:
-      return x+1,y,0
-    elif columns[x][y] == 0:
-      return x,y,1
-    elif columns[x][y+1] == 0:
-      return x,y+1,1
 
- 
   def heuristic(self):
     a = self.state[0]
     b = self.state[1]
@@ -536,116 +461,16 @@ class Doxes(Node):
     cont=0
     coords = np.argwhere(board == 4)
     if coords.size>0:
-      #x,y,z = self.validate(coords[0],a,b)
       cont += coords.size*4
     coords = np.argwhere(board == 2)
     if coords.size>0:
-      #x,y,z = self.labyrinth(coords)
       cont += coords.size*3
-
     coords = np.argwhere(board == 1)
     if coords.size>0:
-      #x,y,z = self.damage(coords)
       cont+= coords.size*2
-
     coords = np.argwhere(board == 3)
     if coords.size>0:
       cont+= coords.size*1
     return cont
-  def labyrinth(self,coords):
-    Max=0
-    cordenadas=[]
-    cordenadas2=[]
-    for i in range(len(coords)):
-      a=coords[i][0]
-      actual=0
-      if coords[i][0] -1 >0:
-         actual+= self.state[2][i][0]
-      if coords[i][0] +1<len(self.state[2][i]):
-         actual+= self.state[2][i][0]
-      if coords[i][1] -1 >0:
-         actual+= self.state[2][i][1]
-      if coords[i][1] +1<len(self.state[2][i]):
-         actual+= self.state[2][i][1]
-      if actual>Max:
-        Max=actual
-        cordenadas= coords[i]
-    
-    
-    if self.state[0][cordenadas[0]][cordenadas[1]] != 1:
-      cordenadas2.append([cordenadas[0],cordenadas[1],0])
-    if self.state[0][cordenadas[0]][cordenadas[1]+1] != 1:
-      cordenadas2.append([cordenadas[0],cordenadas[1]+1,0])
-    if self.state[1][cordenadas[0]][cordenadas[1]] != 1:
-      cordenadas2.append([cordenadas[0],cordenadas[1],1])
-    if self.state[1][cordenadas[0]+1][cordenadas[1]] != 1:
-      cordenadas2.append([cordenadas[0]+1,cordenadas[1],1])
-    return cordenadas2 
-
-  def searchPosition(self, coord):
-    x,y = coord
-    if self.state[0][x][y] == 0:
-      return x,y,0
-    elif self.state[0][x+1][y] == 0:
-      return x+1,y, 0
-    elif self.state[1][x][y] == 0:
-      return x,y,1
-    elif self.state[1][x][y+1] == 0:
-      return x,y+1,1
-
-
-  def damage(self,coords):
-    aux = 0
-    for coord in coords:
-      x,y = coord
-      if self.state[2][x][y-1] == 0:
-        aux =  x,y-1
-        return self.searchPosition(aux)
-      elif self.state[2][x][y+1] == 0:
-        aux = x,y+1
-        return self.searchPosition(aux)
-      elif self.state[2][x-1][y] == 0:
-        aux =  x-1,y
-        return self.searchPosition(aux)
-      elif self.state[2][x+1][y] == 0:
-        aux =  x+1,y
-        return self.searchPosition(aux)
-      else :
-        if self.state[0][x][y] == 0:
-          return x,y,0
-        elif self.state[0][x+1][y] == 0:
-          return x+1,y, 0
-        elif self.state[1][x][y] == 0:
-          return x,y,1
-        elif self.state[1][x][y+1] == 0:
-          return x,y+1,1
-      
-  
-  
-  
-    
-  
-  
-
-
-       
-
-      
-    
-  
-  
-  
-    
-  
-
-
-    
-
-
-
-  
-   
-
-
 game_instance = Dots_and_Boxes()
 game_instance.mainloop()
