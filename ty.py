@@ -5,10 +5,12 @@
 
 from array import array
 from ast import operator
+from contextlib import nullcontext
 from multiprocessing.sharedctypes import Value
 from platform import node
 from queue import Empty
 from tkinter import *
+from unittest import result
 import numpy as np
 
 size_of_board = 600
@@ -155,6 +157,7 @@ class Dots_and_Boxes():
         else:
             color = player2_color
         self.canvas.create_line(start_x, start_y, end_x, end_y, fill=color, width=edge_width)
+    
 
     def display_gameover(self):
         if self.player1_score > self.player2_score:
@@ -253,34 +256,37 @@ class Dots_and_Boxes():
                 self.mark_box()
                 self.refresh_board()
                 
-                operators= self.posibility()
-                status = [self.row_status, self.col_status, self.board_status]
-                prueba= Doxes(True,value="inicio",state = status, operators=operators)
-                print(prueba.state[0])
-                print(prueba.state[1])
-                print(prueba.isObjective())               
-                treeMinMax= Tree(prueba, operators)
-                resultado= treeMinMax.alpha_beta(1)
+              
                 
                 if self.is_gameover():
                     # self.canvas.delete("all")
                     self.display_gameover()
-                elif(cont<len(self.already_marked_boxes)):
-                     self.display_turn_text()
-                else:
-                    self.player1_turn = not self.player1_turn
-                    node = Doxes(True, value = "inicio", state = status, operators=operators)
-                    treeAlphaBeta = Tree(node, operators)
-                    node2 = treeAlphaBeta.alpha_beta(1)
-                    logicalPosition, type =  ia_update(node.state, node2.state)
-                    self.update_board(type, logicalPosition)
-                    self.make_edge(type, logicalPosition)
+                elif(cont==len(self.already_marked_boxes)):
+                  self.player1_turn = not self.player1_turn
+                  while(self.player1_turn==False):
+                    cont = len(self.already_marked_boxes)
+                    operators= self.posibility()
+                    status = [self.row_status, self.col_status, self.board_status]
+                    prueba= Doxes(True,value="inicio",state = status, operators=operators)              
+                    treeMinMax= Tree(prueba, operators)
+                    resultado= treeMinMax.alpha_beta(5)
+                    self.row_status=resultado.state[0]
+                    self.col_status=resultado.state[1]
+                    self.board_status=resultado.state[2]
+                    a,b=ia_update(resultado.state,resultado.parent.state)
+                    self.make_edge(b,a)
                     self.mark_box()
-                    self.refresh_board()
-
-
-
-                    self.display_turn_text()
+                    self.refresh_board()  
+                    print(self.row_status)
+                    print("----")
+                    print(self.col_status)
+                    print("----")
+                    print(self.board_status)
+                    print("----")  
+                    
+                    if(cont==len(self.already_marked_boxes)):
+                      self.player1_turn = True
+                               
         else:
             self.canvas.delete("all")
             self.play_again()
@@ -297,8 +303,6 @@ def ia_update(state1, state2):
       if state1[1][i][j] != state2[1][i][j]:
         return [i, j], "col"
 
-
-  
 
 
 #INCIIO ALPHA BETHA __ COLOCAR EL STATE DE LAS 2 VARIABLES
@@ -327,7 +331,7 @@ class Node ():
     return node
 
 
-  def update_board(self, states):
+  def update_board1(self,states):
     cont = 0
     for i in range(len(states[2])):
       for j in range(len(states[2][i])):
@@ -342,35 +346,37 @@ class Node ():
         states[2][i][j] = cont
         cont=0
     return states[2]
+
   #Devuelve todos los estados según los operadores aplicados
+
   def   getchildrens(self):
     """return [
         self.getState(i) 
           if not self.repeatStatePath(self.getState(i)) 
             else None for i, op in enumerate(self.operators)]
             """
+   
     resultados=[]
     row=self.state[0]
     columns= self.state[1]
-    b= self.state[2]
+    
+    board=[]
     for i in range(len(row)):
       for j in range(len(row[i])):
         if row [i][j]!=1:
-          
+          original= np.copy(self.state[2])  
           nuevo=np.copy(row)
           nuevo[i][j]=1
-          board=self.update_board([nuevo,columns,b])
+          board=self.update_board1([nuevo,columns,original])
           resultados.append([nuevo,columns,board])
-          
-    
     for i in range(len(columns)):
       for j in range(len(columns[i])):
         if columns [i][j]!=1:
 
-
+          original= np.copy(self.state[2])  
           nuevo=np.copy(columns)
           nuevo[i][j]=1
-          board=self.update_board([row,nuevo,b])
+          board=self.update_board1([row,nuevo,original])
           resultados.append([row,nuevo,board])
     
           
@@ -457,7 +463,7 @@ class Tree ():
       children = node.getchildrens()
       for i,child in enumerate(children):
         if child is not None:
-          newChild=type(self.root)(value=node.value+'-'+str(i),state=Doxes.getState(),operator=i,parent=node, operators=node.operators,player=True)
+          newChild=type(self.root)(value=node.value+'-'+str(i),state=children[i],operator=i,parent=node, operators=node.operators,player=True)
           newChild=node.add_node_child(newChild)
           value = min(value,self.alpha_betaR(newChild, depth-1, alpha,beta,True))
           beta = min(beta,value)
@@ -511,129 +517,47 @@ class Doxes(Node):
   def cost(self):
     return self.level
   
-  def validate(self, coord, rows, columns):
+  def validate(coord, rows, columns):
     x,y = coord
-
-    matrix = []
-    coords1 = np.copy(coord)
-    
-    for coord,i in enumerate(coords1):
-      self.lessDamageR(coords1,matrix,coord, i = i,cont = 0 )
-
-    if len(matrix) != 2:
-
-      if rows[x][y] == 0 :
-        return x,y,0
-      elif rows[x+1][y] == 0:
-        return x+1,y,0
-      elif columns[x][y] == 0:
-        return x,y,1
-      elif columns[x][y+1] == 0:
-        return x,y+1,1
-
-    else:
-      array = [len(arr) for arr in matrix]
-      min =array.min()
-      index = array.index(min)	
-      if min !=2 :
-        if rows[x][y] == 0:
-          return x,y,0
-        elif rows[x+1][y] == 0:
-          return x+1,y,0
-        elif columns[x][y] == 0:
-          return x,y,1
-        elif columns[x][y+1] == 0:
-          return x,y+1,1
-      else:
-        if rows[x][y] == 0:
-          return x-1,y,0
-        elif rows[x+1][y] == 0:
-          return x+2,y,0
-        elif columns[x][y] == 0:
-          return x,y-1,1
-        elif columns[x][y+1] == 0:
-          return x,y+2,1
-          	
+    if rows[x][y] == 0:
+      return x,y,0
+    elif rows[x+1][y] == 0:
+      return x+1,y,0
+    elif columns[x][y] == 0:
+      return x,y,1
+    elif columns[x][y+1] == 0:
+      return x,y+1,1
 
  
   def heuristic(self):
     a = self.state[0]
     b = self.state[1]
     board = self.state[2]
-    coords = np.argwhere(board == 3)
+    cont=0
+    coords = np.argwhere(board == 4)
     if coords.size>0:
-      x,y,z = self.validate(coords[0],a,b)
-      if z==0:
-        return 4
-    coords = np.argwhere(board == 1)
-    if coords.size>0:
-      x,y,z = self.labyrinth(coords)
-
-    coords = np.argwhere(board == 0)
-    if coords.size>0:
-      x,y,z = self.damage(coords)
-
+      #x,y,z = self.validate(coords[0],a,b)
+      cont += coords.size*4
     coords = np.argwhere(board == 2)
     if coords.size>0:
-      x,y,z = self.lessDamage(coords)
-      
-    return 0
+      #x,y,z = self.labyrinth(coords)
+      cont += coords.size*3
 
-  def lessDamage(self,coords):
-    matrix = []
-    coords1 = np.copy(coords)
-    for coord,i in enumerate(coords1):
-      self.lessDamageR(coords1,matrix,coord, i = i,cont = 0 )
+    coords = np.argwhere(board == 1)
+    if coords.size>0:
+      #x,y,z = self.damage(coords)
+      cont+= coords.size*2
 
-    array = [len(arr) for arr in matrix]
-    min =array.min()
-    index = array.index(min)	
-
-    coord = matrix[index][0]
-
-    if self.state[0][coord[0]][coord[1]] != 1:
-      return coord[0],coord[1],0
-    elif self.state[0][coord[0]][coord[1]+1] != 1:
-      return coord[0],coord[1]+1,0
-    elif self.state[1][coord[0]][coord[1]] != 1:
-      return coord[0],coord[1],1
-    elif self.state[1][coord[0]][coord[1]+1] != 1:
-      return coord[0],coord[1]+1,1
-     
-
-
-  def lessDamageR(self,coords,matrix,coord, i, cont):
-    x,y = coord
-
-    if self.state[0][x][y] == 0 :
-      matrix[i].append((x,y))
-      coords.remove(coord)
-      self.lessDamageR(coords,matrix, (x-1,y), i, cont+1)
-      
-
-    elif self.state[0][x+1][y] == 0 :
-      matrix[i].append((x,y))
-      coords.remove(coord)
-      self.lessDamageR(coords,matrix,(x+1,y),  i, cont+1)
-      
-    elif self.state[1][x][y] == 0 :
-      matrix[i].append((x,y))
-      coords.remove(coord)
-      self.lessDamageR(coords,matrix,(x,y-1),  i, cont+1)
-      
-      
-    elif self.state[1][x][y+1] == 0 :
-      matrix[i].append((x,y))
-      coords.remove(coord)
-      self.lessDamageR(coords,matrix,(x,y+1), i, cont+1)
-
-          
-
+    coords = np.argwhere(board == 3)
+    if coords.size>0:
+      cont+= coords.size*1
+    return cont
   def labyrinth(self,coords):
     Max=0
     cordenadas=[]
     cordenadas2=[]
     for i in range(len(coords)):
+      a=coords[i][0]
       actual=0
       if coords[i][0] -1 >0:
          actual+= self.state[2][i][0]
