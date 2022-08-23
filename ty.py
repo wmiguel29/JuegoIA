@@ -8,7 +8,7 @@ from tkinter import *
 import numpy as np
 
 size_of_board = 600
-number_of_dots = 3
+number_of_dots = 4
 symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
 symbol_thickness = 50
 dot_color = '#7BC043'
@@ -367,13 +367,6 @@ class Tree ():
     self.root=root
     self.operators=operators
 
-  def reinitRoot(self):
-    self.root.operator=None
-    self.root.parent=None
-    self.root.objective=None
-    self.root.children = []
-    self.root.level=0
-
   def alpha_beta(self, depth):
     self.root.v= self.alpha_betaR(self.root, depth, float('-inf'), float('+inf'), True)
     if not self.root.isObjective():
@@ -424,28 +417,7 @@ class Doxes(Node):
       self.v=float('-inf')
     else:
       self.v=float('inf')
-  
-  def getState(self, index):
-    state1 = self.state[0]
-    state2 = self.state[1]	
-    nextState=None
-    (x,y,z)=self.operators[index]
 
-    if z==0:
-     if state1[x][y]==0:
-      nextState= [f.copy() for f in state1]
-      if self.player==True:  
-        nextState[x][y]=1
-      a=[nextState, state2, self.state[2]]
-      return a
-    
-    elif z==1:
-     if state2[x][y]==0:
-      nextState= [f.copy() for f in state2]
-      if self.player==True:  
-        nextState[x][y]=1
-      a=[state1, nextState, self.state[2]] 
-      return a
     
   def isObjective(self):
     matrix = np.all(self.state[2] == 4)
