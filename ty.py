@@ -436,7 +436,7 @@ class Doxes(Node):
       cont += coords.size*10
     coords = np.argwhere(board == 2)
     if coords.size>0:
-      cont += coords.size*2
+      cont += coords.size*4
     coords = np.argwhere(board == 1)
     if coords.size>0:
       cont+= coords.size*1
