@@ -8,7 +8,7 @@ from tkinter import *
 import numpy as np
 
 size_of_board = 600
-number_of_dots = 4
+number_of_dots = 3
 symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
 symbol_thickness = 50
 dot_color = '#7BC043'
@@ -248,7 +248,7 @@ class Dots_and_Boxes():
                       status = [self.row_status, self.col_status, self.board_status]
                       prueba= Doxes(True,value="inicio",state = status, operators=operators)              
                       treeMinMax= Tree(prueba, operators)
-                      resultado= treeMinMax.alpha_beta(1)
+                      resultado= treeMinMax.alpha_beta(5)
                       self.row_status=resultado.state[0]
                       self.col_status=resultado.state[1]
                       self.board_status=resultado.state[2]
@@ -319,7 +319,7 @@ class Node ():
 
   #Devuelve todos los estados según los operadores aplicados
 
-  def   getchildrens(self):
+  def   getchildrens(self): 
     resultados=[]
     row=self.state[0]
     columns= self.state[1]
@@ -433,16 +433,16 @@ class Doxes(Node):
     cont=0
     coords = np.argwhere(board == 4)
     if coords.size>0:
-      cont += coords.size*4
+      cont += coords.size*10
     coords = np.argwhere(board == 2)
     if coords.size>0:
-      cont += coords.size*3
+      cont += coords.size*2
     coords = np.argwhere(board == 1)
     if coords.size>0:
-      cont+= coords.size*2
+      cont+= coords.size*1
     coords = np.argwhere(board == 3)
     if coords.size>0:
-      cont+= coords.size*1
+      cont-= coords.size*100
     return cont
 game_instance = Dots_and_Boxes()
 game_instance.mainloop()
