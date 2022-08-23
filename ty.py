@@ -8,7 +8,7 @@ from tkinter import *
 import numpy as np
 
 size_of_board = 600
-number_of_dots = 3
+number_of_dots = 6
 symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
 symbol_thickness = 50
 dot_color = '#7BC043'
@@ -248,7 +248,7 @@ class Dots_and_Boxes():
                       status = [self.row_status, self.col_status, self.board_status]
                       prueba= Doxes(True,value="inicio",state = status, operators=operators)              
                       treeMinMax= Tree(prueba, operators)
-                      resultado= treeMinMax.alpha_beta(5)
+                      resultado= treeMinMax.alpha_beta(1)
                       self.row_status=resultado.state[0]
                       self.col_status=resultado.state[1]
                       self.board_status=resultado.state[2]
