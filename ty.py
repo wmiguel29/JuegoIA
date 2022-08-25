@@ -2,51 +2,126 @@
 # Created: 13 March,2020, 9:19 PM
 # Email: aqeel.anwar@gatech.edu
 
-from distutils.cmd import Command
-from mimetypes import init
 from multiprocessing.sharedctypes import Value
 from platform import node
 from tkinter import *
-import numpy as np
 from tkinter import ttk
-import tkinter as tk
-
+import numpy as np
 
 size_of_board = 600
+number_of_dots = 8
 symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
+Green_color = '#7BC043'
 symbol_thickness = 50
 dot_color = '#7BC043'
 player1_color = '#0492CF'
 player1_color_light = '#67B0CF'
 player2_color = '#EE4035'
 player2_color_light = '#EE7E77'
-Green_color = '#7BC043'
-print("Ingrese la dicifultad de 1 a 5")
-dificultad=int(input())
-print("Numero de puntos de 2 en adelante, tener cuidado de combinar dificultad con grandes numeros de puntos")
-number_of_dots = int(input())
 dot_width = 0.25*size_of_board/number_of_dots
 edge_width = 0.1*size_of_board/number_of_dots
 distance_between_dots = size_of_board / (number_of_dots)
+difficulty = 1
+
+
+def set_number_nodes(number):
+  global number_of_dots
+  number_of_dots = number
+
+def set_nodes(number):
+  global difficulty
+  difficulty = number
+
+def dot_width_update():
+  global dot_width
+  dot_width =  0.25*size_of_board/number_of_dots
+
+def edge_width_update():
+  global edge_width
+  edge_width = 0.1*size_of_board/number_of_dots
+
+def distance_between_dots_update():
+  global distance_between_dots
+  distance_between_dots = size_of_board / (number_of_dots)
+
+
+
 
 
 class Dots_and_Boxes():
+  
+    def __init__(self):  
 
-    def __init__(self):
-          self.window = Tk()
-          self.window.title('Dots_and_Boxes')
-          self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
-          self.canvas.pack()
-          self.window.bind('<Button-1>', self.click)
-          self.player1_starts = True
-          self.refresh_board()
-          self.play_again()
-          self.player1_score=0
-          self.player2_score=0
-          self.player=True
-          self.board_status = np.zeros(shape=(number_of_dots - 1, number_of_dots - 1))
+        def save_values():
+          a = int(self.comboEntry.get())
+          b = int(self.number_of_nodes(self.comboDifficulty.get()))
 
-    def play_again(self):
+          set_number_nodes(a)
+          set_nodes(b)
+          dot_width_update()
+          edge_width_update()
+          distance_between_dots_update()
+
+
+
+        self.master = Tk()
+        self.master.title('Dots_and_Boxes')
+        
+        self.title = Label(self.master, text='Dots and Boxes')
+        self.title.pack()
+        
+        
+        self.labelDimension = Label(self.master, text='Enter the dimension of the board')
+        self.labelDimension.pack()
+
+        self.comboEntry = ttk.Combobox(self.master, values = (1,2,3,4,5,6,7,8,9,10))
+        self.comboEntry.pack()
+        #self.comboNumber.bind("<<ComboboxSelected>>",set_number_nodes(int(self.comboNumber.get())))
+        
+        self.dimensionDifficultyLabel = Label(self.master, text='Enter the difficulty of the game')
+        self.dimensionDifficultyLabel.pack()
+
+        self.comboDifficulty = ttk.Combobox(self.master, values=['Easy', 'Medium', 'Hard'])
+        self.comboDifficulty.pack()   
+        #self.comboNumber.bind("<<ComboboxSelected>>", set_nodes(int(self.comboDifficulty.get())))   
+
+        self.saveBUtton = Button(self.master, text = "Save", command = save_values)
+        self.saveBUtton.pack()
+
+
+        self.playButton = Button(self.master, text='Play', command=self.openNewWindow)
+        self.playButton.pack()
+
+
+    
+    
+    def number_of_nodes(self, value):
+      if value == "Easy":
+        return 1
+      elif value == "Medium":
+        return 5
+      elif value == "Hard":
+        return 10
+      else :
+        return 1
+
+
+    def openNewWindow(self):
+        self.window = Toplevel(self.master)
+        self.window.title('Dots_and_Boxes')
+        
+        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
+        self.canvas.pack()
+        self.window.bind('<Button-1>', self.click)
+        self.player1_starts = True
+        self.refresh_board()
+        self.play_again(number_of_dots)
+        self.player1_score=0
+        self.player2_score=0
+        self.player=True
+        self.board_status = np.zeros(shape=(number_of_dots - 1, number_of_dots - 1))
+
+    def play_again(self,number_of_dots):
         self.refresh_board()
         self.board_status = np.zeros(shape=(number_of_dots - 1, number_of_dots - 1))
         self.row_status = np.zeros(shape=(number_of_dots, number_of_dots - 1))
@@ -61,7 +136,7 @@ class Dots_and_Boxes():
         self.display_turn_text()
 
     def mainloop(self):
-        self.window.mainloop()
+        self.master.mainloop()
 
 
     def is_grid_occupied(self, logical_position, type):
@@ -256,7 +331,7 @@ class Dots_and_Boxes():
                       status = [self.row_status, self.col_status, self.board_status]
                       prueba= Doxes(True,value="inicio",state = status, operators=operators)              
                       treeMinMax= Tree(prueba, operators)
-                      resultado= treeMinMax.alpha_beta(1)
+                      resultado= treeMinMax.alpha_beta(difficulty)
                       self.row_status=resultado.state[0]
                       self.col_status=resultado.state[1]
                       self.board_status=resultado.state[2]
@@ -327,7 +402,7 @@ class Node ():
 
   #Devuelve todos los estados según los operadores aplicados
 
-  def   getchildrens(self): 
+  def   getchildrens(self):
     resultados=[]
     row=self.state[0]
     columns= self.state[1]
@@ -444,13 +519,13 @@ class Doxes(Node):
       cont += coords.size*10
     coords = np.argwhere(board == 2)
     if coords.size>0:
-      cont += coords.size*4
+      cont += coords.size*2
     coords = np.argwhere(board == 1)
     if coords.size>0:
       cont+= coords.size*1
     coords = np.argwhere(board == 3)
     if coords.size>0:
-      cont-= coords.size*100
+      cont+= coords.size*-10
     return cont
 game_instance = Dots_and_Boxes()
 game_instance.mainloop()
