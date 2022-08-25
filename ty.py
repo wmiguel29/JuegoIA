@@ -2,108 +2,51 @@
 # Created: 13 March,2020, 9:19 PM
 # Email: aqeel.anwar@gatech.edu
 
+from distutils.cmd import Command
+from mimetypes import init
 from multiprocessing.sharedctypes import Value
 from platform import node
 from tkinter import *
-from tkinter import ttk
 import numpy as np
+from tkinter import ttk
+import tkinter as tk
+
 
 size_of_board = 600
-number_of_dots = 8
 symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
-Green_color = '#7BC043'
 symbol_thickness = 50
 dot_color = '#7BC043'
 player1_color = '#0492CF'
 player1_color_light = '#67B0CF'
 player2_color = '#EE4035'
 player2_color_light = '#EE7E77'
-
-
-def set_number_nodes(number):
-  global number_of_dots
-  number_of_dots = number
-
-def set_nodes(number):
-  global difficulty
-  difficulty = number
+Green_color = '#7BC043'
+print("Ingrese la dicifultad de 1 a 5")
+dificultad=int(input())
+print("Numero de puntos de 2 en adelante, tener cuidado de combinar dificultad con grandes numeros de puntos")
+number_of_dots = int(input())
+dot_width = 0.25*size_of_board/number_of_dots
+edge_width = 0.1*size_of_board/number_of_dots
+distance_between_dots = size_of_board / (number_of_dots)
 
 
 class Dots_and_Boxes():
-  
-    def __init__(self):  
 
-        def save_values():
-          a = int(self.comboEntry.get())
-          b = int(self.number_of_nodes(self.comboDifficulty.get()))
+    def __init__(self):
+          self.window = Tk()
+          self.window.title('Dots_and_Boxes')
+          self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
+          self.canvas.pack()
+          self.window.bind('<Button-1>', self.click)
+          self.player1_starts = True
+          self.refresh_board()
+          self.play_again()
+          self.player1_score=0
+          self.player2_score=0
+          self.player=True
+          self.board_status = np.zeros(shape=(number_of_dots - 1, number_of_dots - 1))
 
-          set_number_nodes(a)
-          set_nodes(b)
-
-
-        self.master = Tk()
-        self.master.title('Dots_and_Boxes')
-        
-        self.title = Label(self.master, text='Dots and Boxes')
-        self.title.pack()
-        
-        
-        self.labelDimension = Label(self.master, text='Enter the dimension of the board')
-        self.labelDimension.pack()
-
-        self.comboEntry = ttk.Combobox(self.master, values = (1,2,3,4,5,6,7,8,9,10))
-        self.comboEntry.pack()
-        #self.comboNumber.bind("<<ComboboxSelected>>",set_number_nodes(int(self.comboNumber.get())))
-        
-        self.dimensionDifficultyLabel = Label(self.master, text='Enter the difficulty of the game')
-        self.dimensionDifficultyLabel.pack()
-
-        self.comboDifficulty = ttk.Combobox(self.master, values=['Easy', 'Medium', 'Hard'])
-        self.comboDifficulty.pack()   
-        #self.comboNumber.bind("<<ComboboxSelected>>", set_nodes(int(self.comboDifficulty.get())))   
-
-        self.saveBUtton = Button(self.master, text = "Save", command = save_values)
-        self.saveBUtton.pack()
-
-        
-        self.dot_width = 0.25*size_of_board/number_of_dots
-        self.edge_width = 0.1*size_of_board/number_of_dots
-        self.distance_between_dots = size_of_board / (number_of_dots)
-        self.difficulty = 1
-
-        self.playButton = Button(self.master, text='Play', command=self.openNewWindow)
-        self.playButton.pack()
-
-
-    
-    
-    def number_of_nodes(self, value):
-      if value == "Easy":
-        return 1
-      elif value == "Medium":
-        return 5
-      elif value == "Hard":
-        return 10
-      else :
-        return 1
-
-
-    def openNewWindow(self):
-        self.window = Toplevel(self.master)
-        self.window.title('Dots_and_Boxes')
-        
-        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
-        self.canvas.pack()
-        self.window.bind('<Button-1>', self.click)
-        self.player1_starts = True
-        self.refresh_board()
-        self.play_again(number_of_dots)
-        self.player1_score=0
-        self.player2_score=0
-        self.player=True
-        self.board_status = np.zeros(shape=(number_of_dots - 1, number_of_dots - 1))
-
-    def play_again(self,number_of_dots):
+    def play_again(self):
         self.refresh_board()
         self.board_status = np.zeros(shape=(number_of_dots - 1, number_of_dots - 1))
         self.row_status = np.zeros(shape=(number_of_dots, number_of_dots - 1))
@@ -118,7 +61,7 @@ class Dots_and_Boxes():
         self.display_turn_text()
 
     def mainloop(self):
-        self.master.mainloop()
+        self.window.mainloop()
 
 
     def is_grid_occupied(self, logical_position, type):
@@ -135,7 +78,7 @@ class Dots_and_Boxes():
 
     def convert_grid_to_logical_position(self, grid_position):
         grid_position = np.array(grid_position)
-        position = (grid_position-self.distance_between_dots/4)//(self.distance_between_dots/2)
+        position = (grid_position-distance_between_dots/4)//(distance_between_dots/2)
         type = False
         logical_position = []
         if position[1] % 2 == 0 and (position[0] - 1) % 2 == 0:
@@ -188,21 +131,21 @@ class Dots_and_Boxes():
 
     def make_edge(self, type, logical_position):
         if type == 'row':
-            start_x = self.distance_between_dots/2 + logical_position[0]*self.distance_between_dots
-            end_x = start_x+self.distance_between_dots
-            start_y = self.distance_between_dots/2 + logical_position[1]*self.distance_between_dots
+            start_x = distance_between_dots/2 + logical_position[0]*distance_between_dots
+            end_x = start_x+distance_between_dots
+            start_y = distance_between_dots/2 + logical_position[1]*distance_between_dots
             end_y = start_y
         elif type == 'col':
-            start_y = self.distance_between_dots / 2 + logical_position[1] * self.distance_between_dots
-            end_y = start_y + self.distance_between_dots
-            start_x = self.distance_between_dots / 2 + logical_position[0] * self.distance_between_dots
+            start_y = distance_between_dots / 2 + logical_position[1] * distance_between_dots
+            end_y = start_y + distance_between_dots
+            start_x = distance_between_dots / 2 + logical_position[0] * distance_between_dots
             end_x = start_x
 
         if self.player1_turn:
             color = player1_color
         else:
             color = player2_color
-        self.canvas.create_line(start_x, start_y, end_x, end_y, fill=color, width=self.edge_width)
+        self.canvas.create_line(start_x, start_y, end_x, end_y, fill=color, width=edge_width)
     
 
     def display_gameover(self):
@@ -237,20 +180,20 @@ class Dots_and_Boxes():
 
     def refresh_board(self):
         for i in range(number_of_dots):
-            x = i*self.distance_between_dots+self.distance_between_dots/2
-            self.canvas.create_line(x, self.distance_between_dots/2, x,
-                                    size_of_board-self.distance_between_dots/2,
+            x = i*distance_between_dots+distance_between_dots/2
+            self.canvas.create_line(x, distance_between_dots/2, x,
+                                    size_of_board-distance_between_dots/2,
                                     fill='gray', dash = (2, 2))
-            self.canvas.create_line(self.distance_between_dots/2, x,
-                                    size_of_board-self.distance_between_dots/2, x,
+            self.canvas.create_line(distance_between_dots/2, x,
+                                    size_of_board-distance_between_dots/2, x,
                                     fill='gray', dash=(2, 2))
 
         for i in range(number_of_dots):
             for j in range(number_of_dots):
-                start_x = i*self.distance_between_dots+self.distance_between_dots/2
-                end_x = j*self.distance_between_dots+self.distance_between_dots/2
-                self.canvas.create_oval(start_x-self.dot_width/2, end_x-self.dot_width/2, start_x+self.dot_width/2,
-                                        end_x+self.dot_width/2, fill=dot_color,
+                start_x = i*distance_between_dots+distance_between_dots/2
+                end_x = j*distance_between_dots+distance_between_dots/2
+                self.canvas.create_oval(start_x-dot_width/2, end_x-dot_width/2, start_x+dot_width/2,
+                                        end_x+dot_width/2, fill=dot_color,
                                         outline=dot_color)
 
     def display_turn_text(self):
@@ -264,15 +207,15 @@ class Dots_and_Boxes():
 
         self.canvas.delete(self.turntext_handle)
         self.turntext_handle = self.canvas.create_text(size_of_board - 5*len(text),
-                                                       size_of_board-self.distance_between_dots/8,
+                                                       size_of_board-distance_between_dots/8,
                                                        font="cmr 15 bold", text=text, fill=color)
 
 
     def shade_box(self, box, color):
-        start_x = self.distance_between_dots / 2 + box[1] * self.distance_between_dots + self.edge_width/2
-        start_y = self.distance_between_dots / 2 + box[0] * self.distance_between_dots + self.edge_width/2
-        end_x = start_x + self.distance_between_dots - self.edge_width
-        end_y = start_y + self.distance_between_dots - self.edge_width
+        start_x = distance_between_dots / 2 + box[1] * distance_between_dots + edge_width/2
+        start_y = distance_between_dots / 2 + box[0] * distance_between_dots + edge_width/2
+        end_x = start_x + distance_between_dots - edge_width
+        end_y = start_y + distance_between_dots - edge_width
         self.canvas.create_rectangle(start_x, start_y, end_x, end_y, fill=color, outline='')
 
     def posibility (self):
@@ -313,7 +256,7 @@ class Dots_and_Boxes():
                       status = [self.row_status, self.col_status, self.board_status]
                       prueba= Doxes(True,value="inicio",state = status, operators=operators)              
                       treeMinMax= Tree(prueba, operators)
-                      resultado= treeMinMax.alpha_beta(difficulty)
+                      resultado= treeMinMax.alpha_beta(1)
                       self.row_status=resultado.state[0]
                       self.col_status=resultado.state[1]
                       self.board_status=resultado.state[2]
@@ -384,7 +327,7 @@ class Node ():
 
   #Devuelve todos los estados según los operadores aplicados
 
-  def   getchildrens(self):
+  def   getchildrens(self): 
     resultados=[]
     row=self.state[0]
     columns= self.state[1]
@@ -501,13 +444,13 @@ class Doxes(Node):
       cont += coords.size*10
     coords = np.argwhere(board == 2)
     if coords.size>0:
-      cont += coords.size*2
+      cont += coords.size*4
     coords = np.argwhere(board == 1)
     if coords.size>0:
       cont+= coords.size*1
     coords = np.argwhere(board == 3)
     if coords.size>0:
-      cont+= coords.size*-10
+      cont-= coords.size*100
     return cont
 game_instance = Dots_and_Boxes()
 game_instance.mainloop()
